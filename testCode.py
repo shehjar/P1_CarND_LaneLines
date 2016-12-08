@@ -47,12 +47,14 @@ def outliers_index(data,thresh=3.5):
 # Here we read a .png and convert to 0,255 bytescale
 #image = (mpimg.imread('test_images/solidWhiteRight.jpg')*255).astype('uint8')
 #image = mpimg.imread('test_images/solidWhiteRight.jpg')
-image = mpimg.imread('test_images/solidWhiteCurve.jpg')
+image = mpimg.imread('test_images/solidWhiteRight.jpg')
 gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))
+gray_contrast = clahe.apply(gray)
 
 # Define a kernel size and apply Gaussian smoothing
-kernel_size = 3
-blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size),0)
+kernel_size = 9
+blur_gray = cv2.GaussianBlur(gray_contrast,(kernel_size, kernel_size),0)
 
 # Define our parameters for Canny and apply
 low_threshold = 50
@@ -75,10 +77,10 @@ masked_edges = cv2.bitwise_and(edges, mask)
 rho = 1 # distance resolution in pixels of the Hough grid
 theta = np.pi/180 # angular resolution in radians of the Hough grid
 threshold = 25    # minimum number of votes (intersections in Hough grid cell)
-min_line_length = 1 #minimum number of pixels making up a line
-max_line_gap = 150    # maximum gap in pixels between connectable line segments
+min_line_length = 30 #minimum number of pixels making up a line
+max_line_gap = 30    # maximum gap in pixels between connectable line segments
 line_image = np.copy(image)*0 # creating a blank to draw lines on
-
+res_line_image = np.copy(image)*0
 # Run Hough on edge detected image
 # Output "lines" is an array containing endpoints of detected line segments
 lines = cv2.HoughLinesP(masked_edges, rho, theta, threshold, np.array([]),
@@ -137,4 +139,10 @@ color_edges = np.dstack((edges, edges, edges))
 lines_edges = cv2.addWeighted(color_edges, 0.8, line_image, 1, 0) 
 plt.imshow(lines_edges)
 
+for line in res_lines:
+    for x1,y1,x2,y2 in line:
+        cv2.line(res_line_image,(x1,y1),(x2,y2),(255,0,0),10)
 
+res_lines_edges = cv2.addWeighted(color_edges, 0.8, res_line_image, 1, 0)
+plt.figure()
+plt.imshow(res_lines_edges)
